@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
+"""
+Task 3: LRU Caching
+"""
 
 from base_caching import BaseCaching
+from collections import OrderedDict
 
 
 class LRUCache(BaseCaching):
@@ -14,7 +18,7 @@ class LRUCache(BaseCaching):
         """
 
         super().__init__()
-        self.usage = []
+        self.cache_data = OrderedDict()
 
     def put(self, key, item):
         """
@@ -22,24 +26,20 @@ class LRUCache(BaseCaching):
         """
 
         if key is None or item is None:
-            pass
+            return
+        if key not in self.cache_data:
+            if len(self.cache_data) + 1 > BaseCaching.MAX_ITEMS:
+                lruKey = self.cache_data.popitem(True)
+                print(f"DISCARD: {lruKey}")
+            self.cache_data[key] = item
+            self.cache_data.move_to_end(key, last=False)
         else:
-            length = len(self.cache_data)
-            if length >= BaseCaching.MAX_ITEMS and key not in self.cache_data:
-                print("DISCARD: {}".format(self.usage[0]))
-                del self.cache_data[self.usage[0]]
-                del self.usage[0]
-            if key in self.usage:
-                del self.usage[self.usage.index(key)]
-                self.usage.append(key)
-                self.cache_data[key] = item
+            self.cache_data[key] = item
 
     def get(self, key):
         """
         Retrieves the value based on the key
         """
-        if key is not None and key in self.cache_data.keys():
-            del self.usage[self.usage.index(key)]
-            self.usage.append(key)
-            return self.cache_data[key]
-        return None     
+        if key is not None and key in self.cache_data:
+            self.cache_data.move_to_end(key, last=False)
+        return self.cache_data.get(key, None)

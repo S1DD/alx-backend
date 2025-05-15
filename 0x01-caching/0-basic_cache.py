@@ -14,12 +14,6 @@ class BasicCache(BaseCaching):
         get(key) - retrieve the value associated with a key
     """
 
-    def __init__(self):
-        """
-        Initialize the class from the parent class __init__ method
-        """
-        BaseCaching.__init__(self)
-
     def put(self, key, item):
         """
         Store a key-value pair
@@ -27,9 +21,7 @@ class BasicCache(BaseCaching):
             Key
             Item
         """
-        if key is None or item is None:
-            pass
-        else:
+        if key is not None and item is not None:
             self.cache_data[key] = item
 
     def get(self, key):
@@ -37,6 +29,4 @@ class BasicCache(BaseCaching):
         Return value linked to key.
         If key is None or doesn't exist, return None
         """
-        if key is not None and key in self.cache_data.keys():
-            return self.cache_data[key]
-        return None
+        return self.cache_data.get(key, None)

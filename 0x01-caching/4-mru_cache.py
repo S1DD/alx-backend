@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from base_caching import BaseCaching
+from collections import OrderedDict
 
 
 class MRUCache(BaseCaching):
@@ -12,33 +13,28 @@ class MRUCache(BaseCaching):
         """
         Initialize the class with parent init method
         """
-
         super().__init__()
-        self.usage = []
+        self.cache_data = OrderedDict()
 
-        def put(self, key, item):
-            """
-            Cache a key-value pair
-            """
-            if key is None and item is None:
-                pass
-            else:
-                length = len(self.cache_data)
-                if length >= BaseCaching.MAX_ITEMS and key not in self.cache_data:
-                    print("DISCARD: {}".format(self.usage[-1]))
-                    del self.cache_data[self.usage[-1]]
-                    del self.usage[-1]
-                if key in self.usage:
-                    del self.usage[self.usage.index(key)]
-                self.usage.append(key)
-                self.cache_data[key] = item
+    def put(self, key, item):
+        """
+        Cache a key-value pair
+        """
+        if key is None and item is None:
+            return
+        if key not in self.cache_data:
+            if len(self.cache_data) + 1 > BaseCaching.MAX_ITEMS:
+                mruKey = self.cache_data.popitem(False)
+                print(f"DISCARD: {mruKey}")
+            self.cache_data[key] = item
+            self.cache_data.move_to_end(key, last=False)
+        else:
+            self.cache_data[key] = item
 
-        def get(self, key):
-            """
-            Returns a value associated with the key
-            """
-            if key is not None and key in self.cache_data.keys():
-                del self.usage[self.usage.index(key)]
-                self.usage.append(key)
-                return self.cache_data[key]
-            return None
+    def get(self, key):
+        """
+        Returns a value associated with the key
+        """
+        if key is not None and key in self.cache_data:
+            self.cache_data.move_to_end(key, last=False)
+        return self.cache_data.get(key, None)
