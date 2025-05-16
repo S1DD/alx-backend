@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from base_caching import BaseCaching
-
+from collections import OrderedDict
 
 class LFUCache(BaseCaching):
     """
@@ -13,53 +13,62 @@ class LFUCache(BaseCaching):
         Initialize class with the base class's init method
         """
         super().__init__()
-        self.usage = []
-        self.frequency = {}
+        self.cache_data = OrderedDict()
+        self.keyFrequency = []
+
+    def reorganize_items(self, mruKey):
+        """Reorganizes the items in the cache based on the most
+        recently used item.
+        """
+        maxPos = []
+        mruFrequency = 0
+        mruPos = 0
+        index = 0
+        for i, keyFrequency in enumerate(self.keyFrequency):
+            if keyFrequency[0] == mruKey:
+                mruFrequency = keyFrequency[1] + 1
+                mruPos = i
+                break
+            elif len(maxPos) == 0:
+                maxPos.append(i)
+            elif keyFrequency[1] < self.keyFrequency[maxPos[-1]][1]:
+                maxPos.append(i)
+        maxPos.reverse()
+        for pos in maxPos:
+            if self.keyFrequency[pos][1] > mruFrequency:
+                break
+            index = pos
+        self.keyFrequency.pop(mruPos)
+        self.keyFrequency.insert(index, [mruKey, mruFrequency])
 
     def put(self, key, item):
         """
         Cache a key-value pair
-        """
+g       """
         if key is None or item is None:
-            pass
+            return
+        if key not in self.cache_data:
+            if len(self.cache_data) + 1 > BaseCaching.MAX_ITEMS:
+                lfuKey = self.keyFrequency[-1]
+                self.cache_data.pop(lfuKey)
+                self.keyFrequency.pop()
+                print(f"DISCARD: {lfuKey}")
+            self.cache_data[key] = item
+            index = len(self.keyFrequency)
+            for i, keyFrequency in enumerate(self.keyFrequency):
+                if keyFrequency[1] == 0:
+                    index = i
+                    break
+            self.keyFrequency.insert(index, [key, 0])
         else:
-            length = len(self.cache_data)
-            if length >= BaseCaching.MAX_ITEMS and key not in self.cache_data:
-                lfu = min(self.frequency.values())
-                lfu_keys = []
-                for k, v in self.frequency.items():
-                    if v == lfu:
-                        lfu_keys.append(k)
-                    if len(lfu_keys) > 1:
-                        lru_lfu = {}
-                        for k in lfu_keys:
-                            lru_lfu[k] = self.usage.index(k)
-                        discard = min(lru_lfu.values())
-                        discard = self.usage[discard]
-                    else:
-                        discard = lfu_keys[0]
-
-                    print("DISCARD: {}".format(discard))
-                    del self.cache_data[discard]
-                    del self.usage[self.usage.index(discard)]
-                    del delf.frequency[discard]
-
-                if key in self.frequency:
-                    self.frequency[key] += 1
-                else:
-                    self.frequency[key] = 1
-                if key inself.usage:
-                    del self.usage[self.usage.index(key)]
-                self.usage.append(key)
-                self.cache_data[key] = item
+            self.cache_data[key] = item
+            self.reorganize_items(key)
 
     def get(self, key):
         """
         Returns a value associated with a specific key
         """
-        if key is not None and key in self.cache_data.keys():
-            del self.usage[self.usage.index(key)]
-            self.usage.append(key)
-            self.frequency[key] += 1
-            return self.cache_data[key]
-        return None
+        if key is not None and key in self.cache_data:
+            self.reorganize_items(key)
+        return self.cache_data.get(key, None)
+        
