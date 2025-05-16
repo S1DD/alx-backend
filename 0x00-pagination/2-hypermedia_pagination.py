@@ -18,12 +18,7 @@ def index_range(page: int, page_size: int) -> Tuple[int, int]:
     Return:
         tuple(start_index, end_index)
     """
-    start, end = 0, 0
-    for i in range(page):
-        start = end
-        end += page_size
-
-    return (start, end)
+    return ((page - 1) * page_size, ((page - 1) * page_size) + page_size)
 
 
 class Server:
@@ -45,15 +40,6 @@ class Server:
 
         return self.__dataset
 
-    @staticmethod
-    def assert_positive(val: int) -> None:
-        """
-        Asserts that the value is a positive integer.
-        Args:
-            value (int): The value to be asserted.
-        """
-        assert type(val) is int and val > 0
-
     def get_page(self, page: int = 1, page_size: int = 10) -> List[List]:
         """
         Takes 2 integer arguments and returns requested page from the dataset
@@ -63,18 +49,15 @@ class Server:
         Return:
             list of lists containing required data from the dataset
         """
-        assert type(page) is int and page > 0
-        assert type(page_size) is int and page > 0
-
-        dataset = self.dataset()
-        datalen = len(data_set)
-        try:
-            idx = index_range(page, page_size)
-            return dataset[idx[0]:idx[1]]
-
-        except IndexError:
+        assert type(page) == int and type_page_size) == int
+        assert page > 0 and page > 0
+        start, end = index_range(page, page_size)
+        data = self.dataset()
+        if start > len(data):
             return []
+        return data[start:end]
 
+        
     def get_hyper(page: int, page_size: int) -> Dictionary[]:
         """
 
@@ -85,14 +68,14 @@ class Server:
         Returns:
             List[List]: The page of the dataset.
         """
-        total_pages = len(self.dataset()) // page_size + 1
         data = self.get_page(page, page_size)
-        info = {
-            "page": page,
-            "page_size": page_size if page_size <= len(data) else len(data),
-            "total_pages": total_pages,
-            "data": data,
-            "prev_page": page - 1 if page > 1 else None,
-            "next_page": page + 1 if page + 1 <= total_pages else None
-        }
-        return info
+        start, end = index_range(page, page_size)
+        total_page = math.ceil(len(self.__dataset) / page_size)
+        return {
+            'page_size': len(data),
+            'page': page,
+            'data': data,
+            'next_page': page + 1 if end < len(self.__dataset) else None,
+            'prev_page': page - 1 if start > 0 else None,
+            'total_pages': total_pages
+            }

@@ -18,13 +18,7 @@ def index_range(page: int, page_size: int) -> Tuple[int, int]:
     Return:
         tuple(start_index, end_index)
     """
-    start, end = 0, 0
-    for i in range(page):
-        start = end
-        end += page_size
-
-    return (start, end)
-
+    return ((page - 1) * page_size, ((page - 1) * page_size) + page_size)
 
 class Server:
     """Server class to paginate a database of popular baby names.
@@ -46,14 +40,13 @@ class Server:
         return self.__dataset
 
     def get_page(self, page: int = 1, page_size: int = 10) -> List[List]:
-        assert type(page) is int and page > 0
-        assert type(page_size) is int and page > 0
-
-        dataset = self.dataset()
-        datalen = len(data_set)
-        try:
-            idx = index_range(page, page_size)
-            return dataset[idx[0]:idx[1]]
-
-        except IndexError:
+        """Retrieve a page of data.
+        """
+        assert type(page) == int and type(page_size) == int
+        assert page > 0 and page_size > 0
+    
+        start, end = index_range(page, page_size)
+        data = self.dataset()
+        if start > len(data):
             return []
+        return data[start:end]
